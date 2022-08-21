@@ -8,25 +8,22 @@ class Bullet {
   constructor() {
     this.id = (bullets.length == 0) ? 0 : bullets.slice(-1).id + 1
     this.rotate = 270
-    this.time = 60 * 3
-    this.w = 6
-    this.h = 6
+    this.time = 60 * 10
+    this.w = 5
+    this.h = 5
     this.x = tank.position.x + tank.width / 2 - 10 / 2 + (Math.cos(
       (tank.rotate - 90) * (Math.PI / 180)
-    )) * 30
+    )) * 40 + 3
     this.y = tank.position.y + tank.height / 2 - 10 / 2 + (Math.sin(
       (tank.rotate - 90) * (Math.PI / 180)
-    )) * 30
-    this.speedX = (Math.cos((tank.rotate - 90) * (Math.PI / 180))) * 10
-    this.speedY = (Math.sin((tank.rotate - 90) * (Math.PI / 180))) * 10
+    )) * 40 + 3
+    this.speedX = (Math.cos((tank.rotate - 90) * (Math.PI / 180))) * 3
+    this.speedY = (Math.sin((tank.rotate - 90) * (Math.PI / 180))) * 3
   }
 
   draw() {
-    if (this.y < 0) this.speedY = -this.speedY
-    if (this.y > canvas.height + this.h) this.speedY = -this.speedY
-    if (this.x < 0) this.speedX = -this.speedX
-    if (this.x > canvas.width + this.h) this.speedX = -this.speedX
-
+    this.ricochet()
+    this.collision()
     this.x += this.speedX
     this.y += this.speedY
 
@@ -35,6 +32,29 @@ class Bullet {
     ctx.arc(this.x, this.y, this.h, 0, 2 * Math.PI);
     ctx.fill();
     // ctx.fillRect(this.x, this.y, this.w, this.h)
+  }
+
+  ricochet() {
+    if (this.y < 0) this.speedY = -this.speedY
+    if (this.y + this.h > canvas.height) this.speedY = -this.speedY
+    if (this.x < 0) this.speedX = -this.speedX
+    if (this.x + this.h > canvas.width) this.speedX = -this.speedX
+  }
+
+  collision() {
+    const avg = tank.height - tank.width
+    let countH = (Math.cos((tank.rotate) * (Math.PI / 180))) * avg
+    if (countH < 0) countH = -countH
+
+    const width = tank.width + -countH + avg
+    const height = tank.width + countH
+    const posx = tank.position.x + ((tank.height - width) / 2) - avg / 2
+    const posy = tank.position.y + -((tank.height - width) / 2) + avg / 2
+
+    if(this.x + this.w * 1.5 > posx && this.x - this.w / 2 < posx + width
+      && this.y + this.h / 2 > posy && this.y - this.h / 2 < posy + height) {
+      tankInit()
+   }
   }
 }
 
@@ -86,6 +106,15 @@ class Floor {
 }
 
 function animate() {
+  
+  if (canvas.offsetHeight > window.innerHeight) {
+    canvas.style.height = '100%'
+    canvas.style.width = 'auto'
+  } else if (canvas.offsetWidth > window.innerWidth) {
+    canvas.style.width = '100%'
+    canvas.style.height = 'auto'
+  }
+
   ctx.fillStyle = 'white'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   
@@ -114,16 +143,6 @@ function smoothStop() {
   if (tank.speed !== 0) setTimeout(smoothStop, 50)
 }
 
-// setInterval(() => {
-//   if (!tank.keys.back && !tank.keys.forward) {
-//     if (tank.velocity.y > 0) {
-//       tank.velocity.y = ((tank.velocity.y * 10) - 2) / 10
-//     } else if (tank.velocity.y < 0) {
-//       tank.velocity.y = ((tank.velocity.y * 10) + 2) / 10
-//     }
-//   }
-// }, 1000/60)
-
 
 
 export {
@@ -131,128 +150,3 @@ export {
   ctx, canvas,
   smoothStop
 }
-
-/*
-const canvas = document.getElementById('canvas')
-const cw = 1280
-const ch = 720
-canvas.setAttribute('width', cw)
-canvas.setAttribute('height', ch)
-const ctx = canvas.getContext('2d')
-
-const sides = {
-  left: false,
-  right: false,
-  down: false
-}
-
-const tank = {
-  w: 50,
-  h: 80,
-  x: Math.floor(cw / 2),
-  y: Math.floor(ch / 2),
-  rotate: 0,
-  speedRotate: 3,
-  defaultSpeed: 5,
-  move: false,
-  speed: 0,
-  smooth: 1
-}
-
-const bullets = []
-
-document.onclick = () => {
-  bullets.push({
-    id: (bullets.length == 0) ? 0 : bullets.slice(-1).id + 1,
-    rotate: tank.rotate,
-    time: 60 * 1,
-    w: 10,
-    h: 25,
-    x: tank.x + tank.w / 2 - 10 / 2 + (Math.cos((tank.rotate - 90) * (Math.PI / 180))) * 100,
-    y: tank.y + tank.h / 2 - 25 / 2 + (Math.sin((tank.rotate - 90) * (Math.PI / 180))) * 100,
-    speedX: (Math.cos((tank.rotate - 90) * (Math.PI / 180))) * 10,
-    speedY: (Math.sin((tank.rotate - 90) * (Math.PI / 180))) * 10
-  })
-}
-
-let image = new Image()
-function render() {
-  ctx.clearRect(0, 0, cw, ch);
-
-  if (sides.left) tank.rotate = tank.rotate += tank.speedRotate
-  else if (sides.right) tank.rotate = tank.rotate -= tank.speedRotate
-  if (tank.rotate > 360) tank.rotate = 0
-  else if (tank.rotate < 0) tank.rotate = 360
-
-  tank.y += (Math.cos(tank.rotate * (Math.PI / 180))) * tank.speed
-  tank.x += -(Math.sin(tank.rotate * (Math.PI / 180))) * tank.speed
-
-  ctx.save()
-
-  ctx.translate(tank.x + tank.w / 2, tank.y + tank.h / 2)
-  ctx.rotate(tank.rotate * (Math.PI / 180))
-  ctx.fillStyle = '#aaa'
-  ctx.fillRect(-(tank.w / 2), -(tank.h / 2), tank.w, tank.h)
-  image.src = './sprites/tank.png'
-
-  ctx.restore()
-
-  bullets.forEach((bullet, index) => {
-    ctx.save()
-    ctx.translate(bullet.x + bullet.w / 2, bullet.y + bullet.h / 2)
-    ctx.rotate(bullet.rotate * (Math.PI / 180))
-    ctx.fillStyle = 'red'
-    ctx.fillRect(-(bullet.w / 2), -(bullet.h / 2), bullet.w, bullet.h)
-    bullet.x += bullet.speedX
-    bullet.y += bullet.speedY
-    ctx.restore()
-
-    if (bullet.time <= 0) delete bullets[index]
-    else bullet.time--
-  })
-
-  setTimeout(arguments.callee, 1000/60)
-} render()
-
-function smoothStop() {
-  if (tank.speed > tank.smooth) tank.speed = ((tank.speed * 10) - tank.smooth * 10) / 10
-  else if (tank.speed < tank.smooth) tank.speed = ((tank.speed * 10) + tank.smooth * 10) / 10
-  else tank.speed = 0
-
-  if (tank.speed !== 0) setTimeout(arguments.callee, 50)
-}
-
-document.onkeydown = (e) => {
-  if (e.code == 'KeyA') {
-    sides.down = true
-    sides.right = true
-  } else if (e.code == 'KeyD') {
-    sides.down = true
-    sides.left = true
-  }
-  
-  if (e.code == 'KeyW') {
-    tank.move = true
-    tank.speed = -tank.defaultSpeed
-  } else if (e.code == 'KeyS') {
-    tank.move = true
-    tank.speed = tank.defaultSpeed
-  }
-}
-
-document.onkeyup = (e) => {
-  if (e.code == 'KeyA') {
-    sides.down = false
-    sides.right = false
-  } else if (e.code == 'KeyD') {
-    sides.down = false
-    sides.left = false
-  }
-
-  if (e.code == 'KeyW' || e.code == 'KeyS') {
-    tank.move = false
-
-    smoothStop()
-  }
-}
- */

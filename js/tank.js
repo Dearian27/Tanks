@@ -1,5 +1,5 @@
 import { ctx, canvas } from "./canvas.js"
-import { redTank, yellowTank } from "./sprites.js"
+import { redTank, yellowTank, tower } from "./sprites.js"
 
 class Tank {
   constructor(x, y) {
@@ -25,7 +25,7 @@ class Tank {
       right: false,
     }
     this.reload = false
-    this.reloadTime = 1000 * 3
+    this.reloadTime = 1000
   }
 
   draw() {
@@ -55,14 +55,38 @@ class Tank {
       -(this.height / 2),
       this.width,
       this.height);
+    
 
-    // ctx.fillRect()
+    // TOWER OF TANK
+    ctx.drawImage(tower,
+      // 8, 13,5
+      -(25 / 2),
+      -(42 - 25 / 2),
+      25,
+      40);
+    ctx.fillStyle = '#fa0'
+  
     ctx.restore()
+    // this.drawCollision()
   }
   update() {
     tank.position.y += (Math.cos(tank.rotate * (Math.PI / 180))) * tank.speed
     tank.position.x += -(Math.sin(tank.rotate * (Math.PI / 180))) * tank.speed
     this.draw()
+  }
+
+  drawCollision() {
+    const avg = this.height - this.width
+    let countH = (Math.cos((tank.rotate) * (Math.PI / 180))) * avg
+    if (countH < 0) countH = -countH
+
+    const width = tank.width + -countH + avg
+    const height = tank.width + countH
+    const posx = tank.position.x + ((tank.height - width) / 2) - avg / 2
+    const posy = tank.position.y + -((tank.height - width) / 2) + avg / 2
+    
+    ctx.fillStyle = 'red'
+    ctx.fillRect(posx, posy, height, width)
   }
 }
 

@@ -13,7 +13,7 @@ import { tank, smoothStop } from './main.js'
 //     case 68: //D => right
 //       tank.keys.right = false
 //       tank.keys.left = true
-//       //ROTATE RIGHT  
+//       //ROTATE RIGHT   
 //       break
 //     case 65: //A => left
 //       tank.keys.right = true
