@@ -1,124 +1,57 @@
-import { redTank, yellowTank } from "./sprites.js"
-// import { tank } from "./tank.js"
+import { tank, tankInit } from "./tank.js"
+import { ctx, canvas } from "./canvas.js"
+import { bullet_default } from "./sprites.js"
 
-const canvas = document.querySelector('canvas')
-const ctx = canvas.getContext('2d')
-
-canvas.width = 1280
-canvas.height = 640
-
-class Player {
-  constructor(x, y) {
-    this.position = {
-      x: x,
-      y: y
-    }
-    this.velocity = {
-      x: 0,
-      y: 0
-    }
-    this.height = 64
-    this.width = 48
-    this.rotate = 0
-    this.speed = 2
-    this.move = false
-    this.frame = 0
-    this.keys = {
-      forward: false,
-      back: false,
-      left: false,
-      right: false,
-    }
+// bullets
+const bullets = []
+class Bullet {
+  constructor() {
+    this.id = (bullets.length == 0) ? 0 : bullets.slice(-1).id + 1
+    this.rotate = 270
+    this.time = 60 * 3
+    this.w = 6
+    this.h = 6
+    this.x = tank.position.x + tank.width / 2 - 10 / 2 + (Math.cos(
+      (tank.rotate - 90) * (Math.PI / 180)
+    )) * 30
+    this.y = tank.position.y + tank.height / 2 - 10 / 2 + (Math.sin(
+      (tank.rotate - 90) * (Math.PI / 180)
+    )) * 30
+    this.speedX = (Math.cos((tank.rotate - 90) * (Math.PI / 180))) * 10
+    this.speedY = (Math.sin((tank.rotate - 90) * (Math.PI / 180))) * 10
   }
 
   draw() {
-    ctx.drawImage(yellowTank,
-      320 * this.frame, 0,
-      320, 420,
-      this.position.x,
-      this.position.y,
-      this.width,
-      this.height);
-    
+    if (this.y < 0) this.speedY = -this.speedY
+    if (this.y > canvas.height + this.h) this.speedY = -this.speedY
+    if (this.x < 0) this.speedX = -this.speedX
+    if (this.x > canvas.width + this.h) this.speedX = -this.speedX
+
+    this.x += this.speedX
+    this.y += this.speedY
+
+    ctx.fillStyle = '#000'
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.h, 0, 2 * Math.PI);
+    ctx.fill();
+    // ctx.fillRect(this.x, this.y, this.w, this.h)
   }
 }
 
-let player = new Player(200, 200)
+// Added bullet
+document.onclick = () => {
+  if (tank.reload) return
 
-class Tank {
-  constructor(x, y) {
-    this.position = {
-      x: x,
-      y: y
-    }
-    this.velocity = {
-      x: 0,
-      y: 0
-    }
-    this.height = 48
-    this.width = 36
-    this.rotate = 0
-    this.speed = 0
-    this.move = false
-    this.frame = 0
-    this.smooth = 1
-    this.keys = {
-      forward: false,
-      back: false,
-      left: false,
-      right: false,
-    }
-  }
+  let fire = new Audio('../audio/fire.mp3')
+  fire.volume = 0.4
+  fire.play()
 
-  draw() {
-    
-    
-    if (this.rotate > 360) this.rotate = 0
-    else if (this.rotate < 0) this.rotate = 360
-  
-    if (this.keys.left && !this.keys.back) {
-      this.rotate -= 2
-    } else if (this.keys.right && !this.keys.back) {
-      this.rotate += 2
-    } else if (this.keys.left) {
-      this.rotate += 2
-    } else if (this.keys.right) {
-      this.rotate -= 2
-    }
-
-    ctx.save()
-
-    ctx.translate(this.position.x + this.width / 2, this.position.y + this.height / 2)
-    ctx.rotate(this.rotate * (Math.PI / 180))
-    // ctx.fillStyle = '#aaa'
-    // ctx.fillRect(-(this.width / 2), -(this.height / 2), this.width, this.height)
-    ctx.drawImage(yellowTank,
-      320 * this.frame, 0,
-      320, 430,
-      -(this.width / 2),
-      -(this.height / 2),
-      this.width,
-      this.height);
-      
-
-    ctx.restore()
-  }
-  update() {
-    tank.position.y += (Math.cos(tank.rotate * (Math.PI / 180))) * tank.speed
-    tank.position.x += -(Math.sin(tank.rotate * (Math.PI / 180))) * tank.speed
-    this.draw()
-  }
+  bullets.push(new Bullet())
+  tank.reload = true
+  setTimeout(() => tank.reload = false, tank.reloadTime)
 }
-let tank = new Tank(canvas.width/2, canvas.height/2)
-
 
 setInterval(()=> { //for animation
-  
-  player.frame++
-  if(player.frame >= 4)
-    player.frame = 0
-
-
   if(tank.move && tank.keys.back)
   {
     tank.frame++
@@ -132,9 +65,6 @@ setInterval(()=> { //for animation
       tank.frame = 3
   }
 }, 25)
-
-
-
 
 class Floor {
   constructor(x, y, color) {
@@ -159,9 +89,15 @@ function animate() {
   ctx.fillStyle = 'white'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   
-  player.draw();
   tank.update()
   
+  bullets.forEach((bullet, index) => {
+    // drawing all bullets
+    if (bullet.time > 0) bullet.time--
+    else delete bullets[index]
+    bullet.draw()
+  })
+
   if(tank.keys.back || tank.keys.forward || tank.keys.left || tank.keys.right)
     tank.move = true;
   else
@@ -171,7 +107,6 @@ function animate() {
 } animate()
 
 function smoothStop() {
-  console.log(tank.smooth)
   if (tank.speed > tank.smooth) tank.speed = ((tank.speed * 10) - tank.smooth * 10) / 10
   else if (tank.speed < tank.smooth) tank.speed = ((tank.speed * 10) + tank.smooth * 10) / 10
   else tank.speed = 0
@@ -193,7 +128,7 @@ function smoothStop() {
 
 export {
   tank,
-  ctx,
+  ctx, canvas,
   smoothStop
 }
 
