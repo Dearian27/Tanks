@@ -10,4 +10,6 @@ bullet_default.src = './img/tanks/bullets/bullet_default.svg'
 const tower = new Image()
 tower.src = './img/tanks/yellow/tower.svg'
 
+
+
 export {redTank, yellowTank, tower, bullet_default}

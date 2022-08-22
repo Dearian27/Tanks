@@ -1,5 +1,6 @@
 import { ctx, canvas } from "./canvas.js"
 import { redTank, yellowTank, tower } from "./sprites.js"
+import { floorCharacInit } from "./floor.js"
 
 class Tank {
   constructor(x, y) {
@@ -67,16 +68,15 @@ class Tank {
     ctx.fillStyle = '#fa0'
   
     ctx.restore()
-    // this.drawCollision()
+    this.drawCollision()
   }
   update() {
-    tank.position.y += (Math.cos(tank.rotate * (Math.PI / 180))) * tank.speed
-    tank.position.x += -(Math.sin(tank.rotate * (Math.PI / 180))) * tank.speed
-    this.draw()
-  }
+    
+    //COLLISION******************************************/
+    
 
-  drawCollision() {
-    const avg = this.height - this.width
+
+    const avg = tank.height - tank.width
     let countH = (Math.cos((tank.rotate) * (Math.PI / 180))) * avg
     if (countH < 0) countH = -countH
 
@@ -84,9 +84,36 @@ class Tank {
     const height = tank.width + countH
     const posx = tank.position.x + ((tank.height - width) / 2) - avg / 2
     const posy = tank.position.y + -((tank.height - width) / 2) + avg / 2
-    
-    ctx.fillStyle = 'red'
-    ctx.fillRect(posx, posy, height, width)
+
+
+
+    // ctx.fillStyle = 'red'
+    // ctx.fillRect(posx, posy, width, height)
+
+    //***************************************************/
+    if(posy <= 0)
+    {
+      this.position.y -= posy
+    }
+    else if (posy + height + (height - this.height) / 2 > canvas.height && (Math.cos(tank.rotate * (Math.PI / 180))) * tank.speed > 0) {
+      this.position.y = canvas.height - height
+    }
+
+    if(posx <= 0)
+    { 
+      this.position.x -= posx
+    }
+    else if (posx + width + (width - this.width) / 2 > canvas.width && (Math.sin(tank.rotate * (Math.PI / 180))) * tank.speed < 0) {
+      this.position.x = canvas.width - width;
+    }
+
+    tank.position.y += (Math.cos(tank.rotate * (Math.PI / 180))) * tank.speed
+    tank.position.x += -(Math.sin(tank.rotate * (Math.PI / 180))) * tank.speed
+    this.draw()
+  }
+
+  drawCollision() {
+   
   }
 }
 
